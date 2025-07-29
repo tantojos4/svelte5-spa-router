@@ -1,0 +1,41 @@
+# Development files
+src/routes/
+src/stories/
+src/demo.spec.js
+src/app.html
+src/app.d.ts
+static/
+
+# Config files
+.svelte-kit/
+vite.config.js
+svelte.config.js
+vitest-setup-client.js
+eslint.config.js
+jsconfig.json
+
+# Build and dev files
+node_modules/
+.env
+.env.*
+.DS_Store
+Thumbs.db
+
+# Development dependencies
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+**/*.test.js
+**/*.spec.js
+
+# Logs
+*.log
+logs/
