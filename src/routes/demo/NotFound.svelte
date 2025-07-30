@@ -1,5 +1,5 @@
 <script>
-	import { goto } from '../../lib/router.js';
+	import { goto } from '../../lib/routers.js';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 

@@ -1,7 +1,7 @@
 <script>
 	import Router from '../lib/Router.svelte';
 	import Link from '../lib/Link.svelte';
-	import { goto, routeParams, queryParams } from '../lib/router.js';
+	import { goto, routeParams, queryParams } from '../lib/routers.js';
 
 	// Sample components for demo
 	import Home from './demo/Home.svelte';

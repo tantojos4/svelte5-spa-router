@@ -12,4 +12,4 @@ export {
   goto,
   getQueryParam,
   updateQueryParams
-} from './router.js';
+} from './routers.js';

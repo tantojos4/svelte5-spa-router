@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { currentRoute, router } from './router.js';
+	import { currentRoute, router } from './routers.js';
 
 	let { routes = [], fallback = null } = $props();
 
@@ -43,9 +43,11 @@
 </script>
 
 {#if currentComponent && typeof currentComponent === 'function'}
-	<svelte:component this={currentComponent} params={routeParams} />
+	{@const Component = /** @type {any} */ (currentComponent)}
+	<Component params={routeParams} />
 {:else if fallback && typeof fallback === 'function'}
-	<svelte:component this={fallback} />
+	{@const Fallback = /** @type {any} */ (fallback)}
+	<Fallback />
 {:else}
 	<div>Loading...</div>
 {/if}

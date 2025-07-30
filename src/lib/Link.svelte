@@ -1,5 +1,5 @@
 <script>
-	import { goto } from './router.js';
+	import { goto } from './routers.js';
 
 	let { href, query = {}, hash = '', children, ...props } = $props();
 

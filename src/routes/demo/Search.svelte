@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { routeParams, queryParams, goto } from '../../lib/router.js';
+	import { routeParams, queryParams, goto } from '../../lib/routers.js';
 
 	interface RouteParams {
 		query?: string;

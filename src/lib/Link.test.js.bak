@@ -1,0 +1,90 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, fireEvent } from '@testing-library/svelte';
+import Link from './Link.svelte';
+import * as router from './router.js';
+
+// Mock the router module
+vi.mock('./routers.js', () => ({
+  goto: vi.fn()
+}));
+
+describe('Link Component', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should render a link with correct href', () => {
+    const { container } = render(Link, {
+      props: {
+        href: '/about',
+        children: 'About'
+      }
+    });
+
+    const link = container.querySelector('a');
+    expect(link).toBeTruthy();
+    expect(link?.getAttribute('href')).toBe('/about');
+  });
+
+  it('should render link with query parameters', () => {
+    const { container } = render(Link, {
+      props: {
+        href: '/search',
+        query: { q: 'svelte', category: 'frontend' },
+        children: 'Search'
+      }
+    });
+
+    const link = container.querySelector('a');
+    expect(link?.getAttribute('href')).toContain('/search');
+    expect(link?.getAttribute('href')).toContain('q=svelte');
+    expect(link?.getAttribute('href')).toContain('category=frontend');
+  });
+
+  it('should render link with hash fragment', () => {
+    const { container } = render(Link, {
+      props: {
+        href: '/docs',
+        hash: 'introduction',
+        children: 'Docs'
+      }
+    });
+
+    const link = container.querySelector('a');
+    expect(link?.getAttribute('href')).toBe('/docs#introduction');
+  });
+
+  it('should call goto when clicked', async () => {
+    const { container } = render(Link, {
+      props: {
+        href: '/about',
+        children: 'About'
+      }
+    });
+
+    const link = container.querySelector('a');
+    if (link) {
+      await fireEvent.click(link);
+      expect(router.goto).toHaveBeenCalled();
+    }
+  });
+
+  it('should prevent default click behavior', async () => {
+    const { container } = render(Link, {
+      props: {
+        href: '/about',
+        children: 'About'
+      }
+    });
+
+    const link = container.querySelector('a');
+    if (link) {
+      const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+      const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+      
+      link.dispatchEvent(event);
+      
+      expect(preventDefaultSpy).toHaveBeenCalled();
+    }
+  });
+});

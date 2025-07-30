@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { routeParams, goto } from '../../lib/router.js';
+	import { routeParams, goto } from '../../lib/routers.js';
 
 	let { params = {} } = $props();
 

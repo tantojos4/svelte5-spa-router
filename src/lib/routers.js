@@ -113,7 +113,7 @@ class Router {
   }
 
   navigateToCurrentUrl() {
-    if (!browser) return;
+    if (!browser) return null;
     
     const urlInfo = this.parseUrl(window.location.href);
     const route = this.findRoute(urlInfo.pathname);
@@ -127,6 +127,7 @@ class Router {
       routeParams.set(route.params);
       queryParams.set(urlInfo.queryParams);
       hashFragment.set(urlInfo.hash);
+      return route.component;
     } else if (this.fallback) {
       currentRoute.set({
         path: urlInfo.pathname,
@@ -136,7 +137,10 @@ class Router {
       routeParams.set({});
       queryParams.set(urlInfo.queryParams);
       hashFragment.set(urlInfo.hash);
+      return this.fallback;
     }
+    
+    return null;
   }
 
   /**
@@ -294,7 +298,7 @@ export function getQueryParam(key, defaultValue = '') {
 
 // Helper to update query params without navigation
 /**
- * @param {Record<string, string>} newParams
+ * @param {Record<string, string | null | undefined>} newParams
  * @param {boolean=} replace
  */
 export function updateQueryParams(newParams, replace = false) {
@@ -306,7 +310,9 @@ export function updateQueryParams(newParams, replace = false) {
     // Replace all query params
     url.search = '';
     Object.entries(newParams).forEach(([key, value]) => {
-      url.searchParams.set(key, value);
+      if (value !== null && value !== undefined && value !== '') {
+        url.searchParams.set(key, value);
+      }
     });
   } else {
     // Update existing query params

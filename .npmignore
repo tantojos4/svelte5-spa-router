@@ -35,7 +35,20 @@ pnpm-lock.yaml
 # Test files
 **/*.test.js
 **/*.spec.js
+**/*.test.js.bak
 
-# Logs
+# Logs and reports
 *.log
 logs/
+coverage/
+.nyc_output/
+
+# Git files
+.git/
+.gitignore
+
+# NPM and build artifacts
+*.tgz
+dist/**/*.test.*
+dist/**/*.spec.*
+dist/**/*.bak

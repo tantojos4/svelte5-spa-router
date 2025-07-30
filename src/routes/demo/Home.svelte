@@ -1,5 +1,5 @@
 <script>
-	import { goto } from '../../lib/router.js';
+	import { goto } from '../../lib/routers.js';
 </script>
 
 <div class="home">

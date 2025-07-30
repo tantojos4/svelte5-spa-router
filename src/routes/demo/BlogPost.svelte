@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { routeParams, goto } from '../../lib/router.js';
+	import { routeParams, goto } from '../../lib/routers.js';
 
 	interface RouteParams {
 		id?: string;
@@ -71,7 +71,7 @@ let { params = {} } = $props();
 const userId = params.id;
 
 // Using store
-import { routeParams } from './lib/router.js';
+import { routeParams } from './lib/routers.js';
 $: userId = $routeParams.id;
 		</code></pre>
 		

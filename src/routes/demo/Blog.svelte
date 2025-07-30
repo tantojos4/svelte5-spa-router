@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, queryParams } from '../../lib/router.js';
+	import { goto, queryParams } from '../../lib/routers.js';
 
 	interface BlogPost {
 		id: string;
