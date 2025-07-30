@@ -28,56 +28,91 @@ pnpm add svelte5-spa-router
 
 ## 🎯 Quick Start
 
+### Basic Setup
+
 ```svelte
 <!-- App.svelte -->
 <script>
-	import { Router, Link } from 'svelte5-spa-router';
+	import Router from 'svelte5-spa-router/Router.svelte';
+	import Link from 'svelte5-spa-router/Link.svelte';
+	import { router } from 'svelte5-spa-router';
+	
 	import Home from './routes/Home.svelte';
 	import About from './routes/About.svelte';
+	import UserProfile from './routes/UserProfile.svelte';
 	import NotFound from './routes/NotFound.svelte';
 
-	const routes = [
-		{ path: '/', component: Home },
-		{ path: '/about', component: About },
-		{ path: '/user/:id', component: UserProfile }
-	];
+	// Setup routes
+	router.addRoute('/', Home);
+	router.addRoute('/about', About);
+	router.addRoute('/user/:id', UserProfile);
+	router.setFallback(NotFound);
 </script>
 
 <nav>
 	<Link href="/">Home</Link>
 	<Link href="/about">About</Link>
+	<Link href="/user/123">User Profile</Link>
 </nav>
 
-<Router {routes} fallback={NotFound} />
+<Router />
 ```
 
-## 🛣️ Route Types
-
-### Static Routes
+### Available Imports
 
 ```javascript
-{ path: '/', component: Home }
-{ path: '/about', component: About }
+// Components
+import Router from 'svelte5-spa-router/Router.svelte';
+import Link from 'svelte5-spa-router/Link.svelte';
+
+// Router instance and functions
+import { 
+	router,           // Main router instance
+	goto,             // Programmatic navigation
+	getQueryParam,    // Get query parameter
+	updateQueryParams // Update query params
+} from 'svelte5-spa-router';
+
+// Reactive stores
+import {
+	currentRoute,     // Current route info
+	routeParams,      // Route parameters
+	queryParams,      // Query parameters
+	hashFragment      // Hash fragment
+} from 'svelte5-spa-router';
 ```
 
-### Dynamic Routes with Parameters
+## 🛣️ Route Setup
+
+### Setting Up Routes
 
 ```javascript
-{ path: '/user/:id', component: UserProfile }
-{ path: '/blog/:slug', component: BlogPost }
-{ path: '/category/:type/item/:id', component: Item }
-```
+import { router } from 'svelte5-spa-router';
+import Home from './components/Home.svelte';
+import About from './components/About.svelte';
+import UserProfile from './components/UserProfile.svelte';
+import BlogPost from './components/BlogPost.svelte';
+import Search from './components/Search.svelte';
+import AdminPanel from './components/AdminPanel.svelte';
+import NotFound from './components/NotFound.svelte';
 
-### Optional Parameters
+// Static Routes
+router.addRoute('/', Home);
+router.addRoute('/about', About);
 
-```javascript
-{ path: '/search/:query?', component: Search }
-```
+// Dynamic Routes with Parameters
+router.addRoute('/user/:id', UserProfile);
+router.addRoute('/blog/:slug', BlogPost);
+router.addRoute('/category/:type/item/:id', ItemDetail);
 
-### Wildcard Routes
+// Optional Parameters
+router.addRoute('/search/:query?', Search);
 
-```javascript
-{ path: '/admin/*', component: AdminPanel }
+// Wildcard Routes
+router.addRoute('/admin/*', AdminPanel);
+
+// Set fallback for 404
+router.setFallback(NotFound);
 ```
 
 ## 🧭 Navigation
@@ -86,11 +121,13 @@ pnpm add svelte5-spa-router
 
 ```svelte
 <script>
-	import { Link } from 'svelte5-spa-router';
+	import Link from 'svelte5-spa-router/Link.svelte';
 </script>
 
 <Link href="/about">About Us</Link>
 <Link href="/user/123">User Profile</Link>
+<Link href="/search?q=svelte">Search Svelte</Link>
+<Link href="/docs#introduction">Documentation</Link>
 ```
 
 ### Programmatic Navigation
@@ -106,6 +143,9 @@ goto('/search', { q: 'svelte', page: '1' });
 
 // With hash fragment
 goto('/docs', {}, 'introduction');
+
+// Combined
+goto('/search', { q: 'svelte', category: 'frontend' }, 'results');
 ```
 
 ## 📊 Accessing Route Data
@@ -116,53 +156,96 @@ goto('/docs', {}, 'introduction');
 <script>
 	import { routeParams } from 'svelte5-spa-router';
 
-	let { params = {} } = $props();
-
-	// From props (recommended)
-	const userId = $derived(params.id);
-
-	// From store
-	const userIdFromStore = $derived($routeParams.id);
+	// Access route parameters reactively
+	const userId = $derived($routeParams.id);
+	const allParams = $derived($routeParams);
 </script>
 
 <h1>User Profile: {userId}</h1>
+<p>All params: {JSON.stringify(allParams)}</p>
 ```
 
 ### Query Parameters
 
 ```svelte
 <script>
-	import { queryParams, getQueryParam } from 'svelte5-spa-router';
+	import { queryParams, getQueryParam, updateQueryParams } from 'svelte5-spa-router';
 
 	// Get single parameter with default
 	const searchQuery = $derived(getQueryParam('q', ''));
 
 	// Get all parameters
 	const allQueryParams = $derived($queryParams);
+
+	// Update query parameters
+	function updateSearch(newQuery) {
+		updateQueryParams({ q: newQuery });
+	}
+
+	// Replace all query parameters
+	function setFilters() {
+		updateQueryParams({ category: 'tech', sort: 'date' }, true);
+	}
 </script>
+
+<input bind:value={searchQuery} onchange={() => updateSearch(searchQuery)} />
+<p>Current query: {searchQuery}</p>
+<p>All params: {JSON.stringify(allQueryParams)}</p>
+```
+
+### Hash Fragments
+
+```svelte
+<script>
+	import { hashFragment } from 'svelte5-spa-router';
+
+	const currentHash = $derived($hashFragment);
+</script>
+
+<p>Current hash: {currentHash}</p>
 ```
 
 ## 🔧 API Reference
 
 ### Components
 
+### Components
+
 #### `<Router>`
 
-Main router component that renders matched routes.
+Main router component that renders the current route based on the URL.
 
-**Props:**
+**Usage:**
+```svelte
+<script>
+	import Router from 'svelte5-spa-router/Router.svelte';
+	import { router } from 'svelte5-spa-router';
+	
+	// Setup your routes first
+	router.addRoute('/', HomeComponent);
+	router.setFallback(NotFoundComponent);
+</script>
 
-- `routes` (Array): Array of route objects `{ path: string, component: Component }`
-- `fallback` (Component, optional): Component to show for unmatched routes
+<Router />
+```
 
 #### `<Link>`
 
-Link component with automatic active state handling.
+Link component with automatic active state handling and proper navigation.
 
 **Props:**
 
 - `href` (string): Target URL
-- `activeClass` (string, optional): CSS class for active links
+- `class` (string, optional): CSS class for the link
+
+**Usage:**
+```svelte
+<script>
+	import Link from 'svelte5-spa-router/Link.svelte';
+</script>
+
+<Link href="/about" class="nav-link">About</Link>
+```
 
 ### Functions
 
@@ -191,15 +274,26 @@ All stores are reactive and can be used with `$` syntax:
 - `queryParams`: Current query parameters object
 - `hashFragment`: Current hash fragment string
 
-## 🎨 Styling Active Links
+## 🎨 Styling Links
 
 ```svelte
-<Link href="/" activeClass="router-link-active">Home</Link>
+<script>
+	import Link from 'svelte5-spa-router/Link.svelte';
+</script>
+
+<Link href="/" class="nav-link">Home</Link>
 
 <style>
-	:global(.router-link-active) {
-		font-weight: bold;
+	:global(.nav-link) {
+		text-decoration: none;
 		color: #007acc;
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		transition: background-color 0.2s;
+	}
+
+	:global(.nav-link:hover) {
+		background-color: #f0f0f0;
 	}
 </style>
 ```
@@ -209,7 +303,8 @@ All stores are reactive and can be used with `$` syntax:
 ```svelte
 <!-- App.svelte -->
 <script>
-	import { Router, currentRoute, goto } from 'svelte5-spa-router';
+	import Router from 'svelte5-spa-router/Router.svelte';
+	import { currentRoute, goto, router } from 'svelte5-spa-router';
 
 	const protectedRoutes = ['/dashboard', '/profile'];
 
@@ -221,7 +316,14 @@ All stores are reactive and can be used with `$` syntax:
 			}
 		}
 	});
+
+	function isAuthenticated() {
+		// Your authentication logic
+		return localStorage.getItem('token') !== null;
+	}
 </script>
+
+<Router />
 ```
 
 ## 🧪 Testing
@@ -229,8 +331,17 @@ All stores are reactive and can be used with `$` syntax:
 ```javascript
 // vitest example
 import { render, fireEvent } from '@testing-library/svelte';
-import { goto } from 'svelte5-spa-router';
+import { goto, router } from 'svelte5-spa-router';
+import Home from '../components/Home.svelte';
+import About from '../components/About.svelte';
 import App from '../App.svelte';
+
+beforeEach(() => {
+	// Setup routes for testing
+	router.clearRoutes();
+	router.addRoute('/', Home);
+	router.addRoute('/about', About);
+});
 
 test('should navigate to about page', async () => {
 	const { getByText } = render(App);
@@ -240,7 +351,9 @@ test('should navigate to about page', async () => {
 });
 
 test('should handle dynamic routes', async () => {
+	router.addRoute('/user/:id', UserProfile);
 	goto('/user/123');
+	
 	const { getByText } = render(App);
 	expect(getByText('User ID: 123')).toBeInTheDocument();
 });
@@ -252,10 +365,14 @@ test('should handle dynamic routes', async () => {
 
 ```diff
 - import router from 'svelte-spa-router'
-+ import { Router } from 'svelte5-spa-router'
++ import Router from 'svelte5-spa-router/Router.svelte'
++ import { router } from 'svelte5-spa-router'
 
 - <Router {routes} />
-+ <Router {routes} fallback={NotFound} />
++ // Setup routes first
++ router.addRoute('/', HomeComponent);
++ router.setFallback(NotFoundComponent);
++ <Router />
 ```
 
 ### From @roxi/routify
@@ -273,13 +390,21 @@ test('should handle dynamic routes', async () => {
 This router works perfectly with SvelteKit for client-side routing:
 
 ```svelte
-<!-- src/app.html -->
+<!-- src/app.html or main component -->
 <script>
-	import { Router } from 'svelte5-spa-router';
-	// Your routes and components
+	import Router from 'svelte5-spa-router/Router.svelte';
+	import { router } from 'svelte5-spa-router';
+	import Home from './routes/Home.svelte';
+	import About from './routes/About.svelte';
+	import NotFound from './routes/NotFound.svelte';
+
+	// Setup routes
+	router.addRoute('/', Home);
+	router.addRoute('/about', About);
+	router.setFallback(NotFound);
 </script>
 
-<Router {routes} fallback={NotFound} />
+<Router />
 ```
 
 ## 🐛 Troubleshooting
@@ -320,7 +445,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ for the Svelte community**
 
-[Report Bug](https://github.com/yourusername/svelte5-spa-router/issues) • [Request Feature](https://github.com/yourusername/svelte5-spa-router/issues) • [Documentation](https://github.com/yourusername/svelte5-spa-router#readme)
+[Report Bug](https://github.com/tantojos4/svelte5-spa-router/issues) • [Request Feature](https://github.com/tantojos4/svelte5-spa-router/issues) • [Documentation](https://github.com/tantojos4/svelte5-spa-router#readme)
 
 ## Developing
 
