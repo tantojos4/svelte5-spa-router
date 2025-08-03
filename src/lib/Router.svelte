@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
+	const browser = typeof window !== 'undefined';
 	import { currentRoute, router } from './routers.js';
 
 	let { routes = [], fallback = null } = $props();

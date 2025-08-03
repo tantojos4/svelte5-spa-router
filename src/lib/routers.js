@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { browser } from '$app/environment';
+const browser = typeof window !== 'undefined';
 
 /**
  * @typedef {Object.<string, string>} RouteParams
