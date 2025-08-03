@@ -194,6 +194,23 @@ class Router {
    * @param {string} currentPath 
    */
   matchRoute(routePath, currentPath) {
+    // Normalize root path: treat '', '/', and '//' as '/'
+    /**
+     * @param {string} p
+     */
+    const normalize = (p) => {
+      if (!p || p === '' || p === '/' || p === '//') return '/';
+      // Remove trailing slash except for root
+      return p.endsWith('/') && p !== '/' ? p.slice(0, -1) : p;
+    };
+    routePath = normalize(routePath);
+    currentPath = normalize(currentPath);
+
+    // Special case: root path always matches
+    if (routePath === '/' && currentPath === '/') {
+      return { params: {} };
+    }
+
     // Handle wildcard routes
     if (routePath.endsWith('/*')) {
       const basePath = routePath.slice(0, -2);
@@ -240,18 +257,17 @@ class Router {
     }
     
     return { params };
-  }  getCurrentComponent() {
+  }
+
+  getCurrentComponent() {
     if (!browser) return null;
-    
     const path = window.location.pathname;
     const route = this.findRoute(path);
-    
     if (route) {
       return route.component;
     } else if (this.fallback) {
       return this.fallback;
     }
-    
     return null;
   }
 }

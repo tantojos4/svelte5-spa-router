@@ -1,3 +1,88 @@
+# Svelte 5 SPA Router – Universal Routing Example
+
+## 🚀 Quick Start
+
+### 1. Install
+
+```bash
+npm install svelte5-spa-router
+```
+
+### 2. Definisikan Route dan Komponen
+
+```svelte
+<script>
+	import Router from 'svelte5-spa-router/Router.svelte';
+	import Link from 'svelte5-spa-router/Link.svelte';
+	import { goto, routeParams, queryParams } from 'svelte5-spa-router';
+
+	import Home from './Home.svelte';
+	import About from './About.svelte';
+	import Blog from './Blog.svelte';
+	import BlogPost from './BlogPost.svelte';
+	import UserProfile from './UserProfile.svelte';
+	import Search from './Search.svelte';
+	import NotFound from './NotFound.svelte';
+
+	const routes = [
+		{ path: '/', component: Home },
+		{ path: '/about', component: About },
+		{ path: '/blog', component: Blog },
+		{ path: '/blog/:id', component: BlogPost },
+		{ path: '/user/:id', component: UserProfile },
+		{ path: '/search/:query?', component: Search }
+	];
+
+	function navigateToBlog() {
+		goto('/blog/my-first-post');
+	}
+	function navigateWithQuery() {
+		goto('/search', { q: 'svelte', category: 'frontend' });
+	}
+	function searchBlog() {
+		goto('/blog', { search: 'router' });
+	}
+</script>
+```
+
+### 3. Gunakan Router dan Link di Template
+
+```svelte
+<nav>
+	<Link href="/">Home</Link>
+	<Link href="/about">About</Link>
+	<Link href="/blog">Blog</Link>
+	<Link href="/user/123">User Profile</Link>
+	<Link href="/search">Search</Link>
+	<button on:click={navigateToBlog}>Go to Blog Post</button>
+	<button on:click={navigateWithQuery}>Search with Query</button>
+	<button on:click={searchBlog}>Search Blog</button>
+</nav>
+
+<Router {routes} fallback={NotFound} />
+```
+
+### 4. Fallback/404
+
+Pastikan Anda menyediakan komponen fallback (misal: `NotFound.svelte`) untuk menangani route yang tidak ditemukan.
+
+### 5. Akses Params
+
+```svelte
+<p>Route Params: {JSON.stringify($routeParams)}</p>
+<p>Query Params: {JSON.stringify($queryParams)}</p>
+```
+
+---
+
+- Semua import harus dari package (`svelte5-spa-router`), bukan dari `src/lib/`.
+- Untuk akses params: gunakan `$routeParams` dan `$queryParams` di template.
+- Tidak perlu SvelteKit, bisa langsung di Vite + Svelte 5.
+
+---
+
+Lihat dokumentasi lengkap dan contoh di [GitHub](https://github.com/tantojos4/svelte5-spa-router)
+
 # 🚀 Svelte 5 SPA Router
 
 [![npm version](https://badge.fury.io/js/svelte5-spa-router.svg)](https://badge.fury.io/js/svelte5-spa-router)
@@ -36,7 +121,7 @@ pnpm add svelte5-spa-router
 	import Router from 'svelte5-spa-router/Router.svelte';
 	import Link from 'svelte5-spa-router/Link.svelte';
 	import { router } from 'svelte5-spa-router';
-	
+
 	import Home from './routes/Home.svelte';
 	import About from './routes/About.svelte';
 	import UserProfile from './routes/UserProfile.svelte';
@@ -66,19 +151,19 @@ import Router from 'svelte5-spa-router/Router.svelte';
 import Link from 'svelte5-spa-router/Link.svelte';
 
 // Router instance and functions
-import { 
-	router,           // Main router instance
-	goto,             // Programmatic navigation
-	getQueryParam,    // Get query parameter
+import {
+	router, // Main router instance
+	goto, // Programmatic navigation
+	getQueryParam, // Get query parameter
 	updateQueryParams // Update query params
 } from 'svelte5-spa-router';
 
 // Reactive stores
 import {
-	currentRoute,     // Current route info
-	routeParams,      // Route parameters
-	queryParams,      // Query parameters
-	hashFragment      // Hash fragment
+	currentRoute, // Current route info
+	routeParams, // Route parameters
+	queryParams, // Query parameters
+	hashFragment // Hash fragment
 } from 'svelte5-spa-router';
 ```
 
@@ -161,8 +246,7 @@ goto('/search', { q: 'svelte', category: 'frontend' }, 'results');
 	const allParams = $derived($routeParams);
 </script>
 
-<h1>User Profile: {userId}</h1>
-<p>All params: {JSON.stringify(allParams)}</p>
+<h1>User Profile: {userId}</h1><p>All params: {JSON.stringify(allParams)}</p>
 ```
 
 ### Query Parameters
@@ -216,11 +300,12 @@ goto('/search', { q: 'svelte', category: 'frontend' }, 'results');
 Main router component that renders the current route based on the URL.
 
 **Usage:**
+
 ```svelte
 <script>
 	import Router from 'svelte5-spa-router/Router.svelte';
 	import { router } from 'svelte5-spa-router';
-	
+
 	// Setup your routes first
 	router.addRoute('/', HomeComponent);
 	router.setFallback(NotFoundComponent);
@@ -239,6 +324,7 @@ Link component with automatic active state handling and proper navigation.
 - `class` (string, optional): CSS class for the link
 
 **Usage:**
+
 ```svelte
 <script>
 	import Link from 'svelte5-spa-router/Link.svelte';
@@ -353,7 +439,7 @@ test('should navigate to about page', async () => {
 test('should handle dynamic routes', async () => {
 	router.addRoute('/user/:id', UserProfile);
 	goto('/user/123');
-	
+
 	const { getByText } = render(App);
 	expect(getByText('User ID: 123')).toBeInTheDocument();
 });

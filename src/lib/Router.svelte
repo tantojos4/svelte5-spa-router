@@ -8,6 +8,7 @@
 	let currentPath = $state('/');
 	let currentComponent = $state(null);
 	let routeParams = $state({});
+	let ready = $state(false);
 
 	onMount(() => {
 		if (!browser) return;
@@ -37,7 +38,7 @@
 
 		// Navigate to current URL after routes are registered
 		router.navigateToCurrentUrl();
-
+		ready = true;
 		return unsubscribe;
 	});
 </script>
@@ -45,7 +46,7 @@
 {#if currentComponent && typeof currentComponent === 'function'}
 	{@const Component = /** @type {any} */ (currentComponent)}
 	<Component params={routeParams} />
-{:else if fallback && typeof fallback === 'function'}
+{:else if ready && fallback && typeof fallback === 'function'}
 	{@const Fallback = /** @type {any} */ (fallback)}
 	<Fallback />
 {:else}
