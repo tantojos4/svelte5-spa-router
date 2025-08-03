@@ -1,6 +1,6 @@
 {
 	"name": "svelte5-spa-router",
-  "version": "1.0.1",
+  "version": "1.0.2",
 	"description": "A simple, flexible, and lightweight SPA router specifically designed for Svelte 5 with runes support",
 	"keywords": [
 		"svelte",
@@ -32,7 +32,7 @@
 		"build": "vite build && npm run package",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"package": "svelte-kit sync && svelte-package && publint",
+	"package": "svelte-kit sync && svelte-package && cp src/lib/*.svelte dist/ && publint",
 		"prepublishOnly": "npm run package",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
