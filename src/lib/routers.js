@@ -223,39 +223,51 @@ class Router {
       }
     }
 
-    // Handle exact and parameter routes
+    // Handle exact and parameter routes (with optional params)
     const routeParts = routePath.split('/');
     const pathParts = currentPath.split('/');
-    
-    if (routeParts.length !== pathParts.length) {
+
+    // Allow match if last routePart is optional and pathParts is shorter by 1
+    let allowOptional = false;
+    if (routeParts.length - pathParts.length === 1) {
+      const lastRoutePart = routeParts[routeParts.length - 1];
+      if (lastRoutePart.startsWith(':') && lastRoutePart.endsWith('?')) {
+        allowOptional = true;
+      }
+    }
+    if (routeParts.length !== pathParts.length && !allowOptional) {
       return null;
     }
 
     /** @type {Record<string, string>} */
     const params = {};
-    
     for (let i = 0; i < routeParts.length; i++) {
       const routePart = routeParts[i];
       const pathPart = pathParts[i];
-      
       if (routePart.startsWith(':')) {
         // Parameter route (e.g., :id)
         const paramName = routePart.slice(1);
         // Handle optional parameters
         if (paramName.endsWith('?')) {
           const actualParamName = paramName.slice(0, -1);
-          if (pathPart) {
+          if (typeof pathPart !== 'undefined' && pathPart !== '') {
             params[actualParamName] = pathPart;
           }
         } else {
+          if (typeof pathPart === 'undefined') return null;
           params[paramName] = pathPart;
         }
-      } else if (routePart !== pathPart) {
+      } else {
         // Exact match required
-        return null;
+        if (typeof pathPart === 'undefined' && allowOptional && i === routeParts.length - 1) {
+          // skip, optional at end
+          continue;
+        }
+        if (routePart !== pathPart) {
+          return null;
+        }
       }
     }
-    
     return { params };
   }
 
