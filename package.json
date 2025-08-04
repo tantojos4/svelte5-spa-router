@@ -31,7 +31,7 @@
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
 		"preview": "vite preview",
-		"prepare": "echo 'Skipping svelte-kit sync for non-kit projects'",
+		"prepare": "echo \"Skipping svelte-kit sync for non-kit projects\"",
 		"package": "svelte-package && cp src/lib/*.svelte dist/ && publint",
 		"prepublishOnly": "npm run package",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
@@ -107,8 +107,6 @@
 		"storybook": "^9.0.18",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
-		"prepare": "echo 'Skipping svelte-kit sync for non-kit projects'",
-		"package": "svelte-package && cp src/lib/*.svelte dist/ && publint",
 		"vitest": "^3.2.3",
 		"vitest-browser-svelte": "^0.1.0"
 	}
