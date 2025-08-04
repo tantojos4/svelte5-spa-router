@@ -1,9 +1,8 @@
 <script>
 	import { goto } from '../../lib/routers.js';
-	import { browser } from '$app/environment';
-	import { page } from '$app/stores';
 
-	$: currentUrl = browser ? window.location.pathname : $page.url.pathname;
+	const browser = typeof window !== 'undefined';
+	$: currentUrl = browser ? window.location.pathname : '';
 </script>
 
 <div class="not-found">
