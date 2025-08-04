@@ -18,7 +18,8 @@
 
 		// Register routes
 		routes.forEach((route) => {
-			router.addRoute(route.path, route.component);
+			const options = route.beforeEnter ? { beforeEnter: route.beforeEnter } : {};
+			router.addRoute(route.path, route.component, options);
 		});
 
 		// Set fallback
