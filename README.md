@@ -1,3 +1,40 @@
+# 🆕 v1.1.8 & v1.1.9: Reactive locationStore for Layout Control
+
+## New: `locationStore` for Layout Reactivity
+
+You can now use a reactive Svelte store to track the current location (pathname, search, hash) for advanced layout logic (e.g. sidebar, header, breadcrumbs) in your app:
+
+```js
+import { locationStore } from 'svelte5-spa-router';
+$: $locationStore.pathname; // Reacts to path changes
+```
+
+**locationStore** is always up-to-date with browser navigation, pushState, replaceState, and popstate events.
+
+## Example: Hide Sidebar on Login Page
+
+```svelte
+<script>
+	import { locationStore } from 'svelte5-spa-router';
+	$: hideSidebar = $locationStore.pathname === '/login';
+</script>
+
+{#if !hideSidebar}
+	<Sidebar />
+{/if}
+```
+
+---
+
+## Changelog (Recent)
+
+- **v1.1.9**: Clean import order, fix TDZ, ensure clean state, publish locationStore
+- **v1.1.8**: Add and export locationStore for layout reactivity
+- **v1.1.7**: Fix optional param bug in matchRoute
+- **v1.1.0+**: Universal SPA router, Svelte 5 compatible
+
+---
+
 # Svelte 5 SPA Router – Universal Routing Example
 
 ## 🚀 Quick Start
