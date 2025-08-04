@@ -1,4 +1,47 @@
 <script>
+	// Role-based guard: hanya admin yang boleh akses
+	/**
+	 * Role-based guard: hanya admin yang boleh akses
+	 * @param {string} to - The route being navigated to
+	 * @param {string} from - The route being navigated from
+	 * @returns {boolean} - True to allow navigation, false to block
+	 */
+	function roleGuard(to, from) {
+		const user = JSON.parse(localStorage.getItem('user') || '{}');
+		if (user.role !== 'admin') {
+			alert('Only admin can access this route!');
+			return false;
+		}
+		return true;
+	}
+	import { onMount } from 'svelte';
+	import { writable } from 'svelte/store';
+	// Store untuk status user
+	const userStatus = writable({ name: null, role: null });
+	function updateUserStatus() {
+		const user = JSON.parse(localStorage.getItem('user') || 'null');
+		if (user && user.name && user.role) {
+			userStatus.set(user);
+		} else {
+			userStatus.set({ name: null, role: null });
+		}
+	}
+
+	// Helper: cek dan redirect jika akses protected tanpa login
+	function checkProtectedOnLoad() {
+		const isAuthenticated = localStorage.getItem('user') !== null;
+		const path = window.location.pathname;
+		if (!isAuthenticated && (path === '/protected' || path.startsWith('/admin'))) {
+			alert('Access denied! Please login first.');
+			goto('/');
+		}
+	}
+
+	onMount(() => {
+		updateUserStatus();
+		checkProtectedOnLoad();
+		window.addEventListener('popstate', checkProtectedOnLoad);
+	});
 	import Router from '../lib/Router.svelte';
 	import Link from '../lib/Link.svelte';
 	import { goto, routeParams, queryParams, router } from '../lib/routers.js';
@@ -13,26 +56,36 @@
 	import NotFound from './demo/NotFound.svelte';
 	import ProtectedRoute from './demo/ProtectedRoute.svelte';
 
-	// Route guard example: simple authentication check
+	/**
+	 * Route guard example: simple authentication check
+	 * @param {string} to - The route being navigated to
+	 * @param {string} from - The route being navigated from
+	 * @returns {boolean} - True to allow navigation, false to block
+	 */
 	function authGuard(to, from) {
 		console.log(`Route guard: navigating from ${from} to ${to}`);
-		
+
 		// Simulate authentication check
 		const isAuthenticated = localStorage.getItem('user') !== null;
-		
+
 		if (!isAuthenticated) {
 			alert('Access denied! Please login first.');
 			return false; // Block navigation
 		}
-		
+
 		console.log('Route guard: access granted');
 		return true; // Allow navigation
 	}
 
-	// Async route guard example
+	/**
+	 * Async route guard example
+	 * @param {string} to - The route being navigated to
+	 * @param {string} from - The route being navigated from
+	 * @returns {Promise<boolean>} - Promise that resolves to true/false
+	 */
 	async function asyncAuthGuard(to, from) {
 		console.log(`Async route guard: navigating from ${from} to ${to}`);
-		
+
 		// Simulate async authentication check (API call)
 		return new Promise((resolve) => {
 			setTimeout(() => {
@@ -54,29 +107,14 @@
 		{ path: '/blog', component: Blog },
 		{ path: '/blog/:id', component: BlogPost },
 		{ path: '/user/:id', component: UserProfile },
-		{ path: '/search/:query?', component: Search }
+		{ path: '/search/:query?', component: Search },
+		{ path: '/protected', component: ProtectedRoute, beforeEnter: authGuard },
+		{ path: '/admin/:id?', component: ProtectedRoute, beforeEnter: asyncAuthGuard },
+		{ path: '/admin-panel', component: ProtectedRoute, beforeEnter: roleGuard }
 	];
-
-	// Routes with guards - using manual addRoute for demonstration
-	function setupRoutesWithGuards() {
-		// Clear existing routes
-		router.clearRoutes();
-		
-		// Add regular routes
-		routes.forEach(route => {
-			router.addRoute(route.path, route.component);
-		});
-		
-		// Add protected routes with guards
-		router.addRoute('/protected', ProtectedRoute, { beforeEnter: authGuard });
-		router.addRoute('/admin/:id?', ProtectedRoute, { beforeEnter: asyncAuthGuard });
-		
-		// Set fallback
-		router.setFallback(NotFound);
+	function navigateToAdminPanel() {
+		goto('/admin-panel');
 	}
-
-	// Initialize routes with guards
-	setupRoutesWithGuards();
 
 	function navigateToBlog() {
 		goto('/blog/my-first-post');
@@ -94,14 +132,18 @@
 		goto('/admin/123');
 	}
 
-	function simulateLogin() {
-		localStorage.setItem('user', JSON.stringify({ name: 'John Doe', role: 'admin' }));
-		alert('Login successful! Now try accessing protected routes.');
+	function simulateLogin(role = 'user') {
+		const name = role === 'admin' ? 'John Admin' : 'Jane User';
+		localStorage.setItem('user', JSON.stringify({ name, role }));
+		alert(`Login as ${role} successful! Now try accessing protected routes.`);
+		updateUserStatus();
 	}
 
 	function simulateLogout() {
 		localStorage.removeItem('user');
 		alert('Logged out! Protected routes will now be blocked.');
+		updateUserStatus();
+		goto('/'); // Redirect ke home agar guard dievaluasi ulang
 	}
 
 	function searchBlog() {
@@ -118,21 +160,34 @@
 			<Link href="/blog">Blog</Link>
 			<Link href="/user/123">User Profile</Link>
 			<Link href="/search">Search</Link>
-			<button onclick={navigateToBlog}>Go to Blog Post</button>
-			<button onclick={navigateWithQuery}>Search with Query</button>
-			<button onclick={searchBlog}>Search Blog</button>
+			<button on:click={navigateToBlog}>Go to Blog Post</button>
+			<button on:click={navigateWithQuery}>Search with Query</button>
+			<button on:click={searchBlog}>Search Blog</button>
 		</nav>
-		
+
 		<!-- Route Guard Demo Section -->
 		<div class="auth-demo">
 			<h3>🔐 Route Guard Demo</h3>
 			<div class="auth-controls">
-				<button onclick={simulateLogin} class="login-btn">Simulate Login</button>
-				<button onclick={simulateLogout} class="logout-btn">Simulate Logout</button>
+				<button on:click={() => simulateLogin('admin')} class="login-btn">Login as Admin</button>
+				<button on:click={() => simulateLogin('user')} class="login-btn">Login as User</button>
+				<button on:click={simulateLogout} class="logout-btn">Logout</button>
+			</div>
+			<div class="user-status">
+				{#if $userStatus.name}
+					<p>👤 Logged in as: <b>{$userStatus.name}</b> (<code>{$userStatus.role}</code>)</p>
+				{:else}
+					<p>🚫 Not logged in</p>
+				{/if}
 			</div>
 			<div class="protected-links">
-				<button onclick={navigateToProtected} class="protected-btn">Protected Route (Sync Guard)</button>
-				<button onclick={navigateToAdmin} class="protected-btn">Admin Route (Async Guard)</button>
+				<button on:click={navigateToProtected} class="protected-btn"
+					>Protected Route (Sync Guard)</button
+				>
+				<button on:click={navigateToAdmin} class="protected-btn">Admin Route (Async Guard)</button>
+				<button on:click={navigateToAdminPanel} class="protected-btn"
+					>Admin Panel (Role Guard)</button
+				>
 			</div>
 		</div>
 	</header>

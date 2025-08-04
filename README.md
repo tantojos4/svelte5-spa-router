@@ -1,3 +1,98 @@
+## 🔒 Route Guards: Auth, Async, Role-based (beforeEnter)
+
+Svelte5 SPA Router mendukung route guard berbasis fungsi `beforeEnter` pada setiap route. Anda bisa membuat guard untuk autentikasi, async check, maupun role-based (admin/user).
+
+### Contoh Penggunaan
+
+```svelte
+<script>
+	import Router from 'svelte5-spa-router/Router.svelte';
+	import Link from 'svelte5-spa-router/Link.svelte';
+	import { goto } from 'svelte5-spa-router';
+	import ProtectedPage from './ProtectedPage.svelte';
+	import AdminPanel from './AdminPanel.svelte';
+	import Home from './Home.svelte';
+
+	// Guard: hanya user login
+	function authGuard(to, from) {
+		const isAuthenticated = localStorage.getItem('user') !== null;
+		if (!isAuthenticated) {
+			alert('Access denied! Please login first.');
+			return false;
+		}
+		return true;
+	}
+
+	// Guard: async (misal cek token ke server)
+	async function asyncAuthGuard(to, from) {
+		return new Promise((resolve) => {
+			setTimeout(() => {
+				const isAuthenticated = localStorage.getItem('user') !== null;
+				resolve(isAuthenticated);
+			}, 300);
+		});
+	}
+
+	// Guard: hanya admin
+	function roleGuard(to, from) {
+		const user = JSON.parse(localStorage.getItem('user') || '{}');
+		if (user.role !== 'admin') {
+			alert('Only admin can access this route!');
+			return false;
+		}
+		return true;
+	}
+
+	const routes = [
+		{ path: '/', component: Home },
+		{ path: '/protected', component: ProtectedPage, beforeEnter: authGuard },
+		{ path: '/admin/:id?', component: ProtectedPage, beforeEnter: asyncAuthGuard },
+		{ path: '/admin-panel', component: AdminPanel, beforeEnter: roleGuard }
+	];
+
+	function simulateLogin(role = 'user') {
+		const name = role === 'admin' ? 'John Admin' : 'Jane User';
+		localStorage.setItem('user', JSON.stringify({ name, role }));
+		alert(`Login as ${role} successful!`);
+	}
+	function simulateLogout() {
+		localStorage.removeItem('user');
+		alert('Logged out!');
+		goto('/');
+	}
+</script>
+
+<div>
+	<button on:click={() => simulateLogin('admin')}>Login as Admin</button>
+	<button on:click={() => simulateLogin('user')}>Login as User</button>
+	<button on:click={simulateLogout}>Logout</button>
+	<nav>
+		<Link href="/">Home</Link>
+		<Link href="/protected">Protected</Link>
+		<Link href="/admin/123">Admin Async</Link>
+		<Link href="/admin-panel">Admin Panel</Link>
+	</nav>
+	<Router {routes} />
+</div>
+
+// ProtectedPage.svelte dan AdminPanel.svelte bisa berupa halaman biasa.
+```
+
+#### Penjelasan
+
+- `beforeEnter`: Fungsi (sync/async) yang dijalankan sebelum route diakses. Return `true` untuk lanjut, `false` untuk blokir.
+- `authGuard`: Hanya user login yang bisa akses.
+- `asyncAuthGuard`: Contoh guard async (misal cek token ke server).
+- `roleGuard`: Hanya user dengan `role: 'admin'` yang bisa akses.
+- Simulasi login/logout menggunakan localStorage.
+
+#### Hasil Demo
+
+- Login sebagai **user**: Bisa akses `/protected` dan `/admin/123`, tidak bisa `/admin-panel`.
+- Login sebagai **admin**: Semua route bisa diakses.
+
+Lihat file `src/routes/demo.svelte` untuk demo lengkap.
+
 # 🆕 v1.1.8 & v1.1.9: Reactive locationStore for Layout Control
 
 ## New: `locationStore` for Layout Reactivity

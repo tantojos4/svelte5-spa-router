@@ -52,18 +52,33 @@ class Router {
    * @param {object} [options]
    * @param {(to: string, from: string) => boolean|Promise<boolean>} [options.beforeEnter]
    */
+  /**
+   * @param {string} path
+   * @param {any} component
+   * @param {{ beforeEnter?: (to: string, from: string) => boolean|Promise<boolean> }} [options]
+   */
   addRoute(path, component, options = {}) {
     this.routes.push({ path, component, beforeEnter: options.beforeEnter });
   }
 
+  /**
+   * Clear all routes
+   */
   clearRoutes() {
     this.routes = [];
   }
 
+  /**
+   * @param {any} component
+   */
   setFallback(component) {
     this.fallback = component;
   }
 
+  /**
+   * @param {string} fullPath
+   * @returns {Promise<any>}
+   */
   async navigate(fullPath) {
     if (!browser) return null;
     const urlInfo = this.parseUrl(fullPath);
@@ -104,6 +119,9 @@ class Router {
     return null;
   }
 
+  /**
+   * @returns {Promise<any>}
+   */
   async navigateToCurrentUrl() {
     if (!browser) return null;
     const urlInfo = this.parseUrl(window.location.href);
@@ -143,6 +161,10 @@ class Router {
     return null;
   }
 
+  /**
+   * @param {string} url
+   * @returns {{ pathname: string, queryParams: Record<string, string>, hash: string }}
+   */
   parseUrl(url) {
     if (!browser) {
       return {
@@ -164,6 +186,10 @@ class Router {
     };
   }
 
+  /**
+   * @param {string} path
+   * @returns {any}
+   */
   findRoute(path) {
     for (const route of this.routes) {
       const match = this.matchRoute(route.path, path);
@@ -177,7 +203,16 @@ class Router {
     return null;
   }
 
+  /**
+   * @param {string} routePath
+   * @param {string} currentPath
+   * @returns {{ params: Record<string, string> } | null}
+   */
   matchRoute(routePath, currentPath) {
+    /**
+     * @param {string} p
+     * @returns {string}
+     */
     const normalize = (p) => {
       if (!p || p === '' || p === '/' || p === '//') return '/';
       return p.endsWith('/') && p !== '/' ? p.slice(0, -1) : p;
@@ -233,6 +268,9 @@ class Router {
     return { params };
   }
 
+  /**
+   * @returns {any}
+   */
   getCurrentComponent() {
     if (!browser) return null;
     const path = window.location.pathname;
@@ -250,6 +288,11 @@ class Router {
 export const router = new Router();
 
 // --- Helpers ---
+/**
+ * @param {string} path
+ * @param {Record<string, string>} [queryParams]
+ * @param {string} [hash]
+ */
 export function goto(path, queryParams = {}, hash = '') {
   if (!browser) return;
   let fullPath = path;
@@ -263,12 +306,22 @@ export function goto(path, queryParams = {}, hash = '') {
   router.navigate(fullPath);
 }
 
+/**
+ * @param {string} key
+ * @param {string} [defaultValue]
+ * @returns {string}
+ */
 export function getQueryParam(key, defaultValue = '') {
+  /** @type {Record<string, string>} */
   let currentQuery = {};
   queryParams.subscribe(q => currentQuery = q)();
   return currentQuery[key] || defaultValue;
 }
 
+/**
+ * @param {Record<string, string>} newParams
+ * @param {boolean} [replace]
+ */
 export function updateQueryParams(newParams, replace = false) {
   if (!browser) return;
   const url = new URL(window.location.href);
