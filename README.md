@@ -1,7 +1,8 @@
 # Svelte 5 SPA Router – Universal Routing Example
 
 ## 🚀 Quick Start
-
+> **Penting untuk SPA Universal:**
+> Agar routing tetap berjalan di semua path (misal `/login`, `/about`), pastikan server static Anda mengarahkan semua request ke `index.html` (lihat bagian Troubleshooting di bawah).
 ### 1. Install
 
 ```bash
@@ -494,6 +495,16 @@ This router works perfectly with SvelteKit for client-side routing:
 ```
 
 ## 🐛 Troubleshooting
+
+### Link Tidak Bekerja Saat Diklik
+
+1. Pastikan import Link seperti ini:
+   ```svelte
+   import Link from 'svelte5-spa-router/Link.svelte';
+   ```
+2. Gunakan `<Link href="/about">About</Link>`, bukan `<a>` biasa.
+3. Pastikan tidak ada elemen lain (overlay/z-index) yang menutupi Link.
+4. Cek console browser untuk error JS.
 
 ### SSR Issues
 
