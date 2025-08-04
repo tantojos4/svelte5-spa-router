@@ -7,7 +7,11 @@
 	 * @returns {boolean} - True to allow navigation, false to block
 	 */
 	function roleGuard(to, from) {
-		const user = JSON.parse(localStorage.getItem('user') || '{}');
+		const user = JSON.parse(localStorage.getItem('user') || 'null');
+		if (!user || !user.role) {
+			alert('Access denied! Please login first.');
+			return false;
+		}
 		if (user.role !== 'admin') {
 			alert('Only admin can access this route!');
 			return false;
