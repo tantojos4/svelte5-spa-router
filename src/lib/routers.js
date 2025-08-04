@@ -1,3 +1,6 @@
+import { writable } from 'svelte/store';
+const browser = typeof window !== 'undefined';
+
 // Reactive store for current location (pathname, search, hash)
 export const locationStore = writable({
   pathname: browser ? window.location.pathname : '/',
@@ -33,9 +36,6 @@ if (browser) {
   window.addEventListener('pushstate', updateLocationStore);
   window.addEventListener('replacestate', updateLocationStore);
 }
-
-import { writable } from 'svelte/store';
-const browser = typeof window !== 'undefined';
 
 /**
  * @typedef {Object.<string, string>} RouteParams
