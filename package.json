@@ -1,6 +1,6 @@
 {
 	"name": "svelte5-spa-router",
-	"version": "1.1.9",
+	"version": "1.2.0",
 	"description": "A simple, flexible, and lightweight SPA router specifically designed for Svelte 5 with runes support",
 	"keywords": [
 		"svelte",
