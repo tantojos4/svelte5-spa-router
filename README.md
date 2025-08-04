@@ -1,15 +1,19 @@
 # Svelte 5 SPA Router – Universal Routing Example
 
 ## 🚀 Quick Start
-> **Penting untuk SPA Universal:**
-> Agar routing tetap berjalan di semua path (misal `/login`, `/about`), pastikan server static Anda mengarahkan semua request ke `index.html` (lihat bagian Troubleshooting di bawah).
+
+> **Important for Universal SPA:**
+> To ensure routing works on all paths (e.g. `/login`, `/about`), make sure your static server rewrites all requests to `index.html` (see Troubleshooting below).
+
 ### 1. Install
 
 ```bash
 npm install svelte5-spa-router
 ```
 
-### 2. Definisikan Route dan Komponen
+### 2. Definisikan Route dan Komponen (REKOMENDASI UTAMA)
+
+### 2. Define Routes and Components (RECOMMENDED)
 
 ```svelte
 <script>
@@ -25,6 +29,7 @@ npm install svelte5-spa-router
 	import Search from './Search.svelte';
 	import NotFound from './NotFound.svelte';
 
+	// Array-based config (recommended for all universal SPAs)
 	const routes = [
 		{ path: '/', component: Home },
 		{ path: '/about', component: About },
@@ -44,11 +49,7 @@ npm install svelte5-spa-router
 		goto('/blog', { search: 'router' });
 	}
 </script>
-```
 
-### 3. Gunakan Router dan Link di Template
-
-```svelte
 <nav>
 	<Link href="/">Home</Link>
 	<Link href="/about">About</Link>
@@ -61,30 +62,28 @@ npm install svelte5-spa-router
 </nav>
 
 <Router {routes} fallback={NotFound} />
-```
 
-### 4. Fallback/404
-
-Pastikan Anda menyediakan komponen fallback (misal: `NotFound.svelte`) untuk menangani route yang tidak ditemukan.
-
-### 5. Akses Params
-
-```svelte
+<!-- Access params in your component -->
 <p>Route Params: {JSON.stringify($routeParams)}</p>
 <p>Query Params: {JSON.stringify($queryParams)}</p>
 ```
 
 ---
 
-- Semua import harus dari package (`svelte5-spa-router`), bukan dari `src/lib/`.
-- Untuk akses params: gunakan `$routeParams` dan `$queryParams` di template.
-- Tidak perlu SvelteKit, bisa langsung di Vite + Svelte 5.
+#### Note:
+
+- **The array-based config above is the default and most recommended for universal SPAs.**
+- The imperative way (`router.addRoute`) is only for advanced use-cases (e.g. dynamic/plugin route injection), not needed for most apps.
 
 ---
 
-Lihat dokumentasi lengkap dan contoh di [GitHub](https://github.com/tantojos4/svelte5-spa-router)
+- Always import from the package (`svelte5-spa-router`), not from `src/lib/`.
+- To access params, use `$routeParams` and `$queryParams` in your template.
+- No SvelteKit required, works directly with Vite + Svelte 5.
 
-# 🚀 Svelte 5 SPA Router
+---
+
+# 🚀 Svelte 5 SPA Router on SvelteKit runes support
 
 [![npm version](https://badge.fury.io/js/svelte5-spa-router.svg)](https://badge.fury.io/js/svelte5-spa-router)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
