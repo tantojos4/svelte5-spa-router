@@ -1,3 +1,39 @@
+// Reactive store for current location (pathname, search, hash)
+export const locationStore = writable({
+  pathname: browser ? window.location.pathname : '/',
+  search: browser ? window.location.search : '',
+  hash: browser ? window.location.hash : ''
+});
+
+function updateLocationStore() {
+  locationStore.set({
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash
+  });
+}
+
+if (browser) {
+  window.addEventListener('popstate', updateLocationStore);
+  // Patch pushState and replaceState to emit events
+  const origPushState = window.history.pushState;
+  window.history.pushState = function (...args) {
+    const result = origPushState.apply(this, args);
+    window.dispatchEvent(new Event('pushstate'));
+    updateLocationStore();
+    return result;
+  };
+  const origReplaceState = window.history.replaceState;
+  window.history.replaceState = function (...args) {
+    const result = origReplaceState.apply(this, args);
+    window.dispatchEvent(new Event('replacestate'));
+    updateLocationStore();
+    return result;
+  };
+  window.addEventListener('pushstate', updateLocationStore);
+  window.addEventListener('replacestate', updateLocationStore);
+}
+
 import { writable } from 'svelte/store';
 const browser = typeof window !== 'undefined';
 
@@ -84,7 +120,7 @@ class Router {
     
     // Find matching route
     const route = this.findRoute(urlInfo.pathname);
-    
+    updateLocationStore();
     if (route) {
       // Update stores with route info
       currentRoute.set({
@@ -108,7 +144,6 @@ class Router {
       hashFragment.set(urlInfo.hash);
       return this.fallback;
     }
-    
     return null;
   }
 
@@ -117,7 +152,7 @@ class Router {
     
     const urlInfo = this.parseUrl(window.location.href);
     const route = this.findRoute(urlInfo.pathname);
-    
+    updateLocationStore();
     if (route) {
       currentRoute.set({
         path: urlInfo.pathname,
@@ -139,7 +174,6 @@ class Router {
       hashFragment.set(urlInfo.hash);
       return this.fallback;
     }
-    
     return null;
   }
 

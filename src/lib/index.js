@@ -15,5 +15,6 @@ export {
   hashFragment,
   goto,
   getQueryParam,
-  updateQueryParams
+  updateQueryParams,
+  locationStore
 } from './routers.js';
