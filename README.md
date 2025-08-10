@@ -1,3 +1,91 @@
+# Cypress E2E Testing
+
+This project includes comprehensive Cypress end-to-end tests for all SPA router routes, including nested, parameterized, and guarded routes.
+
+## Tested Routes
+
+- `/` (Home)
+- `/about` (About)
+- `/blog` (Blog)
+- `/blog/123` (BlogPost)
+- `/search?query=router` (Search)
+- `/user/tanto` (UserProfile)
+- `/admin-panel` (Admin Panel, requires authentication)
+- `/multi/123` (MultiParent)
+- `/multi/123/child/abc` (MultiChild)
+- `/multi/123/child/abc/grandchild/foo` (MultiGrandchild)
+- `/nested` (NestedParent)
+- `/nested/child` (NestedChild)
+- Unknown route (NotFound)
+
+## Example: Nested & Multi-level Routes
+
+You can define deeply nested and multi-level routes using flat path patterns:
+
+```js
+import MultiParent from './MultiParent.svelte';
+import MultiChild from './MultiChild.svelte';
+import MultiGrandchild from './MultiGrandchild.svelte';
+import NestedParent from './NestedParent.svelte';
+import NestedChild from './NestedChild.svelte';
+
+const routes = [
+	{ path: '/multi/:parentId', component: MultiParent },
+	{ path: '/multi/:parentId/child/:childId', component: MultiChild },
+	{ path: '/multi/:parentId/child/:childId/grandchild/:grandId', component: MultiGrandchild },
+	{ path: '/nested', component: NestedParent },
+	{ path: '/nested/child', component: NestedChild }
+];
+
+// Usage in Svelte:
+<Router {routes} />
+
+// Access params in your component:
+<script>
+	import { routeParams } from 'svelte5-spa-router';
+	// $routeParams.parentId, $routeParams.childId, $routeParams.grandId
+</script>
+```
+
+Navigation example:
+
+```svelte
+<Link href="/multi/123">MultiParent</Link>
+<Link href="/multi/123/child/abc">MultiChild</Link>
+<Link href="/multi/123/child/abc/grandchild/foo">MultiGrandchild</Link>
+<Link href="/nested">NestedParent</Link>
+<Link href="/nested/child">NestedChild</Link>
+```
+
+## Admin Route Guard
+
+The `/admin-panel` route is protected by a role-based guard. Cypress sets the required user object in `localStorage` before navigation:
+
+```js
+cy.visit('http://localhost:5174/admin-panel', {
+	onBeforeLoad(win) {
+		win.localStorage.setItem('user', JSON.stringify({ role: 'admin', name: 'cypress' }));
+	}
+});
+```
+
+## Running Cypress Tests
+
+1. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+2. Run Cypress in interactive mode:
+   ```bash
+   npx cypress open
+   ```
+   Or run all tests headlessly:
+   ```bash
+   npx cypress run --spec cypress/e2e/routes.integration.cy.js
+   ```
+
+All tests are located in `cypress/e2e/routes.integration.cy.js`.
+
 ## 🔒 Route Guards: Auth, Async, Role-based (beforeEnter)
 
 Svelte5 SPA Router mendukung route guard berbasis fungsi `beforeEnter` pada setiap route. Anda bisa membuat guard untuk autentikasi, async check, maupun role-based (admin/user).
@@ -123,10 +211,40 @@ $: $locationStore.pathname; // Reacts to path changes
 
 ## Changelog (Recent)
 
-- **v1.1.9**: Clean import order, fix TDZ, ensure clean state, publish locationStore
-- **v1.1.8**: Add and export locationStore for layout reactivity
-- **v1.1.7**: Fix optional param bug in matchRoute
-- **v1.1.0+**: Universal SPA router, Svelte 5 compatible
+## v1.2.2 Changelog & Migration
+
+### 🚀 What's New in v1.2.2
+
+- **Multi-level & Nested Route Support:**
+  - Flat route definitions for deeply nested paths (e.g. `/multi/:parentId/child/:childId/grandchild/:grandId`).
+- **Improved Route Guards:**
+  - Role-based, async, and parameterized guards with `beforeEnter`.
+- **Cypress E2E Testing:**
+  - Full coverage for all routes, including nested and guarded endpoints.
+- **Demo & Docs Update:**
+  - README now includes explicit examples for nested/multi routes and guard usage.
+- **Bug Fixes & Stability:**
+  - Improved param parsing, fallback handling, and route matching.
+
+### ⚡ Migration Notes
+
+- **Flat Route Definitions:**
+  - Replace nested/children arrays with flat `path` strings for all routes.
+  - Example:
+    ```js
+    // Old (nested)
+    { path: '/multi/:parentId', children: [ ... ] }
+    // New (flat)
+    { path: '/multi/:parentId/child/:childId', component: MultiChild }
+    ```
+- **Route Guards:**
+  - Use `beforeEnter` on each route for sync/async/role checks.
+- **Testing:**
+  - Use Cypress for browser-based E2E tests (`cypress/e2e/routes.integration.cy.js`).
+- **No Breaking Changes:**
+  - Existing array-based config and imperative `router.addRoute` still supported.
+
+See the updated README and demo for usage patterns and migration examples.
 
 ---
 

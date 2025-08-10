@@ -1,4 +1,10 @@
 <script>
+	import MultiParent from './demo/MultiParent.svelte';
+	import MultiChild from './demo/MultiChild.svelte';
+	import MultiGrandchild from './demo/MultiGrandchild.svelte';
+	import { currentRoute } from '../lib/routers.js';
+	import NestedParent from './demo/NestedParent.svelte';
+	import NestedChild from './demo/NestedChild.svelte';
 	// Role-based guard: hanya admin yang boleh akses
 	/**
 	 * Role-based guard: hanya admin yang boleh akses
@@ -114,7 +120,12 @@
 		{ path: '/search/:query?', component: Search },
 		{ path: '/protected', component: ProtectedRoute, beforeEnter: authGuard },
 		{ path: '/admin/:id?', component: ProtectedRoute, beforeEnter: asyncAuthGuard },
-		{ path: '/admin-panel', component: ProtectedRoute, beforeEnter: roleGuard }
+		{ path: '/admin-panel', component: ProtectedRoute, beforeEnter: roleGuard },
+		{ path: '/nested', component: NestedParent },
+		{ path: '/nested/child', component: NestedChild },
+		{ path: '/multi/:id', component: MultiParent },
+		{ path: '/multi/:id/child/:slug', component: MultiChild },
+		{ path: '/multi/:id/child/:slug/grandchild/:foo', component: MultiGrandchild }
 	];
 	function navigateToAdminPanel() {
 		goto('/admin-panel');
@@ -159,6 +170,8 @@
 	<header>
 		<h1>Svelte 5 SPA Router Demo</h1>
 		<nav>
+			<Link href="/nested">Nested Parent</Link>
+			<Link href="/nested/child">Nested Parent + Child</Link>
 			<Link href="/">Home</Link>
 			<Link href="/about">About</Link>
 			<Link href="/blog">Blog</Link>
@@ -197,7 +210,53 @@
 	</header>
 
 	<main>
+		<!-- Multi-level Nested Routing Demo Section -->
+		<section
+			style="margin-top:2rem; padding:1rem; border:2px dashed #009688; border-radius:8px; background:#f8fff8;"
+		>
+			<h2>Multi-level Nested Routing Demo</h2>
+			<ul>
+				<li><Link href="/multi/123">Multi Parent (id=123)</Link></li>
+				<li><Link href="/multi/123/child/abc">Multi Child (id=123, slug=abc)</Link></li>
+				<li>
+					<Link href="/multi/123/child/abc/grandchild/foo?bar=baz"
+						>Multi Grandchild (id=123, slug=abc, foo=foo, bar=baz)</Link
+					>
+				</li>
+			</ul>
+			{#if $currentRoute.branch && $currentRoute.branch.length > 0 && $currentRoute.path.startsWith('/multi')}
+				<svelte:component
+					this={$currentRoute.branch[0].component}
+					childComponent={$currentRoute.branch.length > 1
+						? $currentRoute.branch[1].component
+						: null}
+					childParams={$currentRoute.branch.length > 1 ? $currentRoute.branch[1].params : {}}
+				/>
+			{/if}
+		</section>
 		<Router {routes} fallback={NotFound} />
+
+		<!-- Nested Routing Demo Section -->
+		<section
+			style="margin-top:2rem; padding:1rem; border:2px dashed #0077cc; border-radius:8px; background:#f8faff;"
+		>
+			<h2>Nested Routing Demo</h2>
+			<p>Contoh nested/group routing:</p>
+			<ul>
+				<li><Link href="/nested">Parent Only</Link></li>
+				<li><Link href="/nested/child">Parent + Child</Link></li>
+			</ul>
+			{#if $currentRoute.branch && $currentRoute.branch.length > 0 && $currentRoute.branch[0].component && $currentRoute.path.startsWith('/nested')}
+				<svelte:component
+					this={$currentRoute.branch[0].component}
+					childComponent={$currentRoute.branch.length > 1 && $currentRoute.branch[1].component
+						? $currentRoute.branch[1].component
+						: null}
+				/>
+			{:else if $currentRoute.path.startsWith('/nested')}
+				<p>Tidak ada route yang cocok.</p>
+			{/if}
+		</section>
 	</main>
 
 	<footer>

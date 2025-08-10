@@ -7,7 +7,15 @@ export const locationStore = writable({
   search: browser ? window.location.search : '',
   hash: browser ? window.location.hash : ''
 });
-export const currentRoute = writable({ path: '/', component: null, params: {} });
+/**
+ * @typedef {Object} CurrentRoute
+ * @property {string} path
+ * @property {any} component
+ * @property {Record<string, string>} params
+ * @property {Array<{component: any, params: Record<string, string>}>} branch
+ */
+/** @type {import('svelte/store').Writable<CurrentRoute>} */
+export const currentRoute = writable({ path: '/', component: null, params: {}, branch: [] });
 export const routeParams = writable({});
 export const queryParams = writable({});
 export const hashFragment = writable('');
@@ -22,6 +30,25 @@ function updateLocationStore() {
 
 // --- Router Class ---
 class Router {
+  /**
+   * Find route match for a given path (flat route definitions)
+   * @param {string} path
+   * @returns {Array<{route: object, params: object}>}
+   */
+  /**
+   * Find route match for a given path (flat route definitions)
+   * @param {string} path
+   * @returns {Array<{route: {path: string, component: any, beforeEnter?: (to: string, from: string) => boolean|Promise<boolean>}, params: Record<string, string>}>}
+   */
+  findRouteBranch(path) {
+    for (const route of this.routes) {
+      const match = this.matchRoute(route.path, path);
+      if (match && match.params && typeof route.component !== 'undefined') {
+        return [{ route: route, params: match.params }];
+      }
+    }
+    return [];
+  }
   constructor() {
     /**
      * @type {Array<{path: string, component: any, beforeEnter?: (to: string, from: string) => boolean|Promise<boolean>}>}
@@ -57,8 +84,15 @@ class Router {
    * @param {any} component
    * @param {{ beforeEnter?: (to: string, from: string) => boolean|Promise<boolean> }} [options]
    */
-  addRoute(path, component, options = {}) {
-    this.routes.push({ path, component, beforeEnter: options.beforeEnter });
+  /**
+   * Add a route (flat definition)
+   * @param {{path: string, component: any, beforeEnter?: (to: string, from: string) => boolean|Promise<boolean>}} routeObj - Route object, must have path and component
+   */
+  addRoute(routeObj) {
+    if (!routeObj || typeof routeObj.path !== 'string' || !routeObj.component) {
+      throw new Error('Route object must have at least "path" (string) and "component" (Svelte component)');
+    }
+    this.routes.push(routeObj);
   }
 
   /**
@@ -82,33 +116,38 @@ class Router {
   async navigate(fullPath) {
     if (!browser) return null;
     const urlInfo = this.parseUrl(fullPath);
-    const route = this.findRoute(urlInfo.pathname);
-    // Route guard: beforeEnter
-    if (route && route.beforeEnter) {
-      const allow = await route.beforeEnter(urlInfo.pathname, this._lastPath);
-      if (!allow) {
-        // Navigation cancelled
-        return null;
+    const branch = this.findRouteBranch(urlInfo.pathname);
+    // Route guard: beforeEnter (check all in branch)
+    for (const match of branch) {
+      if (match.route && typeof match.route.beforeEnter === 'function') {
+        const allow = await match.route.beforeEnter(urlInfo.pathname, this._lastPath);
+        if (!allow) {
+          return null;
+        }
       }
     }
     window.history.pushState({}, '', fullPath);
     updateLocationStore();
-    if (route) {
+    if (branch.length) {
+      // Leaf route is last in branch
+      const leaf = branch[branch.length - 1];
       currentRoute.set({
         path: urlInfo.pathname,
-        component: route.component,
-        params: route.params
+        component: leaf.route.component || null,
+        params: leaf.params || {},
+        branch: branch.map(b => ({ component: b.route.component || null, params: b.params || {} }))
       });
-      routeParams.set(route.params);
+      routeParams.set(leaf.params || {});
       queryParams.set(urlInfo.queryParams);
       hashFragment.set(urlInfo.hash);
       this._lastPath = urlInfo.pathname;
-      return route.component;
+      return leaf.route.component || null;
     } else if (this.fallback) {
       currentRoute.set({
         path: urlInfo.pathname,
         component: this.fallback,
-        params: {}
+        params: {},
+        branch: []
       });
       routeParams.set({});
       queryParams.set(urlInfo.queryParams);
@@ -125,32 +164,35 @@ class Router {
   async navigateToCurrentUrl() {
     if (!browser) return null;
     const urlInfo = this.parseUrl(window.location.href);
-    const route = this.findRoute(urlInfo.pathname);
-    // Route guard: beforeEnter
-    if (route && route.beforeEnter) {
-      const allow = await route.beforeEnter(urlInfo.pathname, this._lastPath);
-      if (!allow) {
-        // Navigation cancelled
-        return null;
+    const branch = this.findRouteBranch(urlInfo.pathname);
+    for (const match of branch) {
+      if (match.route && typeof match.route.beforeEnter === 'function') {
+        const allow = await match.route.beforeEnter(urlInfo.pathname, this._lastPath);
+        if (!allow) {
+          return null;
+        }
       }
     }
     updateLocationStore();
-    if (route) {
+    if (branch.length) {
+      const leaf = branch[branch.length - 1];
       currentRoute.set({
         path: urlInfo.pathname,
-        component: route.component,
-        params: route.params
+        component: leaf.route.component || null,
+        params: leaf.params || {},
+        branch: branch.map(b => ({ component: b.route.component || null, params: b.params || {} }))
       });
-      routeParams.set(route.params);
+      routeParams.set(leaf.params || {});
       queryParams.set(urlInfo.queryParams);
       hashFragment.set(urlInfo.hash);
       this._lastPath = urlInfo.pathname;
-      return route.component;
+      return leaf.route.component || null;
     } else if (this.fallback) {
       currentRoute.set({
         path: urlInfo.pathname,
         component: this.fallback,
-        params: {}
+        params: {},
+        branch: []
       });
       routeParams.set({});
       queryParams.set(urlInfo.queryParams);
