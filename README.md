@@ -1,186 +1,3 @@
-# Cypress E2E Testing
-
-This project includes comprehensive Cypress end-to-end tests for all SPA router routes, including nested, parameterized, and guarded routes.
-
-## Tested Routes
-
-- `/` (Home)
-- `/about` (About)
-- `/blog` (Blog)
-- `/blog/123` (BlogPost)
-- `/search?query=router` (Search)
-- `/user/tanto` (UserProfile)
-- `/admin-panel` (Admin Panel, requires authentication)
-- `/multi/123` (MultiParent)
-- `/multi/123/child/abc` (MultiChild)
-- `/multi/123/child/abc/grandchild/foo` (MultiGrandchild)
-- `/nested` (NestedParent)
-- `/nested/child` (NestedChild)
-- Unknown route (NotFound)
-
-## Example: Nested & Multi-level Routes
-
-You can define deeply nested and multi-level routes using flat path patterns:
-
-```js
-import MultiParent from './MultiParent.svelte';
-import MultiChild from './MultiChild.svelte';
-import MultiGrandchild from './MultiGrandchild.svelte';
-import NestedParent from './NestedParent.svelte';
-import NestedChild from './NestedChild.svelte';
-
-const routes = [
-	{ path: '/multi/:parentId', component: MultiParent },
-	{ path: '/multi/:parentId/child/:childId', component: MultiChild },
-	{ path: '/multi/:parentId/child/:childId/grandchild/:grandId', component: MultiGrandchild },
-	{ path: '/nested', component: NestedParent },
-	{ path: '/nested/child', component: NestedChild }
-];
-
-// Usage in Svelte:
-<Router {routes} />
-
-// Access params in your component:
-<script>
-	import { routeParams } from 'svelte5-spa-router';
-	// $routeParams.parentId, $routeParams.childId, $routeParams.grandId
-</script>
-```
-
-Navigation example:
-
-```svelte
-<Link href="/multi/123">MultiParent</Link>
-<Link href="/multi/123/child/abc">MultiChild</Link>
-<Link href="/multi/123/child/abc/grandchild/foo">MultiGrandchild</Link>
-<Link href="/nested">NestedParent</Link>
-<Link href="/nested/child">NestedChild</Link>
-```
-
-## Admin Route Guard
-
-The `/admin-panel` route is protected by a role-based guard. Cypress sets the required user object in `localStorage` before navigation:
-
-```js
-cy.visit('http://localhost:5174/admin-panel', {
-	onBeforeLoad(win) {
-		win.localStorage.setItem('user', JSON.stringify({ role: 'admin', name: 'cypress' }));
-	}
-});
-```
-
-## Running Cypress Tests
-
-1. Start the dev server:
-   ```bash
-   npm run dev
-   ```
-2. Run Cypress in interactive mode:
-   ```bash
-   npx cypress open
-   ```
-   Or run all tests headlessly:
-   ```bash
-   npx cypress run --spec cypress/e2e/routes.integration.cy.js
-   ```
-
-All tests are located in `cypress/e2e/routes.integration.cy.js`.
-
-## 🔒 Route Guards: Auth, Async, Role-based (beforeEnter)
-
-Svelte5 SPA Router mendukung route guard berbasis fungsi `beforeEnter` pada setiap route. Anda bisa membuat guard untuk autentikasi, async check, maupun role-based (admin/user).
-
-### Contoh Penggunaan
-
-```svelte
-<script>
-	import Router from 'svelte5-spa-router/Router.svelte';
-	import Link from 'svelte5-spa-router/Link.svelte';
-	import { goto } from 'svelte5-spa-router';
-	import ProtectedPage from './ProtectedPage.svelte';
-	import AdminPanel from './AdminPanel.svelte';
-	import Home from './Home.svelte';
-
-	// Guard: hanya user login
-	function authGuard(to, from) {
-		const isAuthenticated = localStorage.getItem('user') !== null;
-		if (!isAuthenticated) {
-			alert('Access denied! Please login first.');
-			return false;
-		}
-		return true;
-	}
-
-	// Guard: async (misal cek token ke server)
-	async function asyncAuthGuard(to, from) {
-		return new Promise((resolve) => {
-			setTimeout(() => {
-				const isAuthenticated = localStorage.getItem('user') !== null;
-				resolve(isAuthenticated);
-			}, 300);
-		});
-	}
-
-	// Guard: hanya admin
-	function roleGuard(to, from) {
-		const user = JSON.parse(localStorage.getItem('user') || '{}');
-		if (user.role !== 'admin') {
-			alert('Only admin can access this route!');
-			return false;
-		}
-		return true;
-	}
-
-	const routes = [
-		{ path: '/', component: Home },
-		{ path: '/protected', component: ProtectedPage, beforeEnter: authGuard },
-		{ path: '/admin/:id?', component: ProtectedPage, beforeEnter: asyncAuthGuard },
-		{ path: '/admin-panel', component: AdminPanel, beforeEnter: roleGuard }
-	];
-
-	function simulateLogin(role = 'user') {
-		const name = role === 'admin' ? 'John Admin' : 'Jane User';
-		localStorage.setItem('user', JSON.stringify({ name, role }));
-		alert(`Login as ${role} successful!`);
-	}
-	function simulateLogout() {
-		localStorage.removeItem('user');
-		alert('Logged out!');
-		goto('/');
-	}
-</script>
-
-<div>
-	<button on:click={() => simulateLogin('admin')}>Login as Admin</button>
-	<button on:click={() => simulateLogin('user')}>Login as User</button>
-	<button on:click={simulateLogout}>Logout</button>
-	<nav>
-		<Link href="/">Home</Link>
-		<Link href="/protected">Protected</Link>
-		<Link href="/admin/123">Admin Async</Link>
-		<Link href="/admin-panel">Admin Panel</Link>
-	</nav>
-	<Router {routes} />
-</div>
-
-// ProtectedPage.svelte dan AdminPanel.svelte bisa berupa halaman biasa.
-```
-
-#### Penjelasan
-
-- `beforeEnter`: Fungsi (sync/async) yang dijalankan sebelum route diakses. Return `true` untuk lanjut, `false` untuk blokir.
-- `authGuard`: Hanya user login yang bisa akses.
-- `asyncAuthGuard`: Contoh guard async (misal cek token ke server).
-- `roleGuard`: Hanya user dengan `role: 'admin'` yang bisa akses.
-- Simulasi login/logout menggunakan localStorage.
-
-#### Hasil Demo
-
-- Login sebagai **user**: Bisa akses `/protected` dan `/admin/123`, tidak bisa `/admin-panel`.
-- Login sebagai **admin**: Semua route bisa diakses.
-
-Lihat file `src/routes/demo.svelte` untuk demo lengkap.
-
 # 🆕 v1.1.8 & v1.1.9: Reactive locationStore for Layout Control
 
 ## New: `locationStore` for Layout Reactivity
@@ -662,6 +479,104 @@ All stores are reactive and can be used with `$` syntax:
 <Router />
 ```
 
+## 🔒 Route Guards: Auth, Async, Role-based (beforeEnter)
+
+Svelte5 SPA Router supports function-based route guards using `beforeEnter` on each route. You can create guards for authentication, async checks, or role-based access (admin/user).
+
+### Contoh Penggunaan
+
+```svelte
+<script>
+	import Router from 'svelte5-spa-router/Router.svelte';
+	import Link from 'svelte5-spa-router/Link.svelte';
+	import { goto } from 'svelte5-spa-router';
+	import ProtectedPage from './ProtectedPage.svelte';
+	import AdminPanel from './AdminPanel.svelte';
+	import Home from './Home.svelte';
+
+	// Guard: hanya user login
+	function authGuard(to, from) {
+		const isAuthenticated = localStorage.getItem('user') !== null;
+		if (!isAuthenticated) {
+			alert('Access denied! Please login first.');
+			return false;
+		}
+		return true;
+	}
+
+	// Guard: async (misal cek token ke server)
+	async function asyncAuthGuard(to, from) {
+		return new Promise((resolve) => {
+			setTimeout(() => {
+				const isAuthenticated = localStorage.getItem('user') !== null;
+				resolve(isAuthenticated);
+			}, 300);
+		});
+	}
+
+	// Guard: hanya admin
+	function roleGuard(to, from) {
+		const user = JSON.parse(localStorage.getItem('user') || '{}');
+		if (user.role !== 'admin') {
+			alert('Only admin can access this route!');
+			return false;
+		}
+		return true;
+	}
+
+	const routes = [
+		{ path: '/', component: Home },
+		{ path: '/protected', component: ProtectedPage, beforeEnter: authGuard },
+		{ path: '/admin/:id?', component: ProtectedPage, beforeEnter: asyncAuthGuard },
+		{ path: '/admin-panel', component: AdminPanel, beforeEnter: roleGuard }
+	];
+
+	function simulateLogin(role = 'user') {
+		const name = role === 'admin' ? 'John Admin' : 'Jane User';
+		localStorage.setItem('user', JSON.stringify({ name, role }));
+		alert(`Login as ${role} successful!`);
+	}
+	function simulateLogout() {
+		localStorage.removeItem('user');
+		alert('Logged out!');
+		goto('/');
+	}
+</script>
+
+<div>
+	<button on:click={() => simulateLogin('admin')}>Login as Admin</button>
+	<button on:click={() => simulateLogin('user')}>Login as User</button>
+	<button on:click={simulateLogout}>Logout</button>
+	<nav>
+		<Link href="/">Home</Link>
+		<Link href="/protected">Protected</Link>
+		<Link href="/admin/123">Admin Async</Link>
+		<Link href="/admin-panel">Admin Panel</Link>
+	</nav>
+	<Router {routes} />
+</div>
+
+// ProtectedPage.svelte dan AdminPanel.svelte bisa berupa halaman biasa.
+```
+
+#### Penjelasan
+
+#### Explanation
+
+`beforeEnter`: Function (sync/async) executed before accessing the route. Return `true` to proceed, `false` to block.
+`authGuard`: Only logged-in users can access.
+`asyncAuthGuard`: Example of async guard (e.g., check token to server).
+`roleGuard`: Only users with `role: 'admin'` can access.
+Simulate login/logout using localStorage.
+
+#### Demo Result
+
+Login as **user**: Can access `/protected` and `/admin/123`, cannot access `/admin-panel`.
+Login as **admin**: All routes can be accessed.
+See the file `src/routes/demo.svelte` for a complete demo.
+
+Lihat file `src/routes/demo.svelte` untuk demo lengkap.
+
 ## 🧪 Testing
 
 ```javascript
@@ -743,17 +658,105 @@ This router works perfectly with SvelteKit for client-side routing:
 <Router />
 ```
 
+# Cypress E2E Testing
+
+This project includes comprehensive Cypress end-to-end tests for all SPA router routes, including nested, parameterized, and guarded routes.
+
+## Tested Routes
+
+- `/` (Home)
+- `/about` (About)
+- `/blog` (Blog)
+- `/blog/123` (BlogPost)
+- `/search?query=router` (Search)
+- `/user/tanto` (UserProfile)
+- `/admin-panel` (Admin Panel, requires authentication)
+- `/multi/123` (MultiParent)
+- `/multi/123/child/abc` (MultiChild)
+- `/multi/123/child/abc/grandchild/foo` (MultiGrandchild)
+- `/nested` (NestedParent)
+- `/nested/child` (NestedChild)
+- Unknown route (NotFound)
+
+## Example: Nested & Multi-level Routes
+
+You can define deeply nested and multi-level routes using flat path patterns:
+
+```js
+import MultiParent from './MultiParent.svelte';
+import MultiChild from './MultiChild.svelte';
+import MultiGrandchild from './MultiGrandchild.svelte';
+import NestedParent from './NestedParent.svelte';
+import NestedChild from './NestedChild.svelte';
+
+const routes = [
+	{ path: '/multi/:parentId', component: MultiParent },
+	{ path: '/multi/:parentId/child/:childId', component: MultiChild },
+	{ path: '/multi/:parentId/child/:childId/grandchild/:grandId', component: MultiGrandchild },
+	{ path: '/nested', component: NestedParent },
+	{ path: '/nested/child', component: NestedChild }
+];
+
+// Usage in Svelte:
+<Router {routes} />
+
+// Access params in your component:
+<script>
+	import { routeParams } from 'svelte5-spa-router';
+	// $routeParams.parentId, $routeParams.childId, $routeParams.grandId
+</script>
+```
+
+Navigation example:
+
+```svelte
+<Link href="/multi/123">MultiParent</Link>
+<Link href="/multi/123/child/abc">MultiChild</Link>
+<Link href="/multi/123/child/abc/grandchild/foo">MultiGrandchild</Link>
+<Link href="/nested">NestedParent</Link>
+<Link href="/nested/child">NestedChild</Link>
+```
+
+## Admin Route Guard
+
+The `/admin-panel` route is protected by a role-based guard. Cypress sets the required user object in `localStorage` before navigation:
+
+```js
+cy.visit('http://localhost:5174/admin-panel', {
+	onBeforeLoad(win) {
+		win.localStorage.setItem('user', JSON.stringify({ role: 'admin', name: 'cypress' }));
+	}
+});
+```
+
+## Running Cypress Tests
+
+1. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+2. Run Cypress in interactive mode:
+   ```bash
+   npx cypress open
+   ```
+   Or run all tests headlessly:
+   ```bash
+   npx cypress run --spec cypress/e2e/routes.integration.cy.js
+   ```
+
+All tests are located in `cypress/e2e/routes.integration.cy.js`.
+
 ## 🐛 Troubleshooting
 
-### Link Tidak Bekerja Saat Diklik
+### Link Not Working When Clicked
 
-1. Pastikan import Link seperti ini:
+1. Make sure to import Link like this:
    ```svelte
    import Link from 'svelte5-spa-router/Link.svelte';
    ```
-2. Gunakan `<Link href="/about">About</Link>`, bukan `<a>` biasa.
-3. Pastikan tidak ada elemen lain (overlay/z-index) yang menutupi Link.
-4. Cek console browser untuk error JS.
+2. Use `<Link href="/about">About</Link>`, not a regular `<a>` tag.
+3. Ensure there are no other elements (overlay/z-index) covering the Link.
+4. Check the browser console for JS errors.
 
 ### SSR Issues
 
